@@ -6,6 +6,7 @@ try:
     cur = conn.cursor()
 except:
     print "I am unable to connect to the database"
+    quit()
 
 # Header of file: Dates,Category,Descript,DayOfWeek,PdDistrict,Resolution,Address,X,Y
 # Example contents: 015-05-13 23:53:00,WARRANTS,WARRANT ARREST,Wednesday,NORTHERN,"ARREST, BOOKED",
@@ -22,6 +23,7 @@ cur.execute('CREATE TABLE train ('
             'address TEXT, '
             'x DECIMAL, '
             'y DECIMAL);')
+conn.commit()
 
 print("Reading in data...")
 train = pd.read_csv('../CrimeData/train.csv')
@@ -33,14 +35,19 @@ for index, row in train.iterrows():
     values = [row['Dates'], row['Category'], row['Descript'].replace("'", "''"), row['DayOfWeek'], row['PdDistrict'],
               row['Resolution'], row['Address'], row['X'], row['Y']]
 
+    count = count+1
     if count % 10000 == 0:
         print('Inserted {0} records so far'.format(count))
+
     cur.execute('INSERT INTO train (dates, category, description, day_of_week, '
                'pd_district, resolution, address, x, y) '
                'VALUES (\'{0[0]}\', \'{0[1]}\', \'{0[2]}\', \'{0[3]}\', \'{0[4]}\', \'{0[5]}\', \'{0[6]}\', '
                 '\'{0[7]}\', \'{0[8]}\');'
                 .format(values))
-    count = count+1
 
 
+conn.commit()
+
+cur.close()
+conn.close()
 print("All done!")
