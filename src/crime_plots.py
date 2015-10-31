@@ -8,11 +8,11 @@ except:
     print "I am unable to connect to the database"
     quit()
 
-cur.execute("SELECT DISTINCT category FROM train;")
+cur.execute("SELECT DISTINCT category FROM full_data;")
 categories = cur.fetchall()
 
 
-cur.execute("SELECT DISTINCT EXTRACT(YEAR FROM dates) FROM train")
+cur.execute("SELECT DISTINCT EXTRACT(YEAR FROM dates) FROM full_data")
 years = cur.fetchall()
 
 
