@@ -1,25 +1,71 @@
+-- Extensions for geolocation
+create extension cube;
+create extension earthdistance;
+
 CREATE SCHEMA IF NOT EXISTS staging;
 
-CREATE TABLE staging.crime
+-- Create staging tables
+CREATE TABLE staging.incidents
 (
-    incident_id TEXT,
-    category TEXT,
-    description TEXT,
-    day_of_week TEXT,
-    date TEXT,
-    time TEXT,
-    district TEXT,
-    resolution TEXT,
-    address TEXT,
-    x TEXT,
-    y TEXT,
-    location TEXT,
-    pd_id TEXT
+    incident_id     TEXT,
+    category        TEXT,
+    description     TEXT,
+    day_of_week     TEXT,
+    date            TEXT,
+    time            TEXT,
+    district        TEXT,
+    resolution      TEXT,
+    address         TEXT,
+    x               TEXT,
+    y               TEXT,
+    location        TEXT,
+    pd_id           TEXT
 );
 
-\copy staging.crime from 'sf_crime.csv' CSV HEADER;
+CREATE TABLE staging.train
+(
+    date            TEXT,
+    category        TEXT,
+    description     TEXT,
+    day_of_week     TEXT,
+    district        TEXT,
+    resolution      TEXT,
+    address         TEXT,
+    x               TEXT,
+    y               TEXT
+);
 
-CREATE or replace FUNCTION percent_unique(table_name REGCLASS, column_name TEXT,
+CREATE TABLE staging.test
+(
+    incident_id     TEXT,
+    date            TEXT,
+    day_of_week     TEXT,
+    district        TEXT,
+    address         TEXT,
+    x               TEXT,
+    y               TEXT
+);
+
+CREATE TABLE staging.answers
+(
+    incident_id     TEXT,
+    date            TEXT,
+    category        TEXT,
+    day_of_week     TEXT,
+    district        TEXT,
+    address         TEXT,
+    x               TEXT,
+    y               TEXT
+);
+
+-- Load in the staging data
+\copy staging.incidents from '../data/sf_crime.csv' CSV HEADER;
+\copy staging.train from '../data/train.csv' CSV HEADER;
+\copy staging.test from '../data/test.csv' CSV HEADER;
+\copy staging.answers from '../data/answers.csv' CSV HEADER;
+
+
+CREATE or REPLACE FUNCTION percent_unique(table_name REGCLASS, column_name TEXT,
                                           OUT result NUMERIC)
 LANGUAGE PLPGSQL
 AS
@@ -33,6 +79,7 @@ BEGIN
   INTO result;
 END
 $$;
+
 
 CREATE FUNCTION normalize_column(source_table REGCLASS, source_column TEXT,
                                  target_table TEXT,
@@ -60,19 +107,16 @@ BEGIN
 END
 $$;
 
-select normalize_column('staging.crime', 'address', 'addresses', 'address_id', 'address', 'TEXT');
-select normalize_column('staging.crime', 'resolution', 'resolutions', 'resolution_id', 'resolution', 'TEXT');
-select normalize_column('staging.crime', 'description', 'descriptions', 'description_id', 'description', 'TEXT');
-select normalize_column('staging.crime', 'category', 'categories', 'category_id', 'category', 'TEXT');
-select normalize_column('staging.crime', 'district', 'districts', 'district_id', 'district', 'TEXT');
+select normalize_column('staging.incidents', 'address', 'addresses', 'address_id', 'address', 'TEXT');
+select normalize_column('staging.incidents', 'resolution', 'resolutions', 'resolution_id', 'resolution', 'TEXT');
+select normalize_column('staging.incidents', 'description', 'descriptions', 'description_id', 'description', 'TEXT');
+select normalize_column('staging.incidents', 'category', 'categories', 'category_id', 'category', 'TEXT');
+select normalize_column('staging.incidents', 'district', 'districts', 'district_id', 'district', 'TEXT');
 
-create extension cube;
-create extension earthdistance;
-
-CREATE TABLE crime
+CREATE TABLE incidents
 (
     incident_id     SERIAL    NOT NULL PRIMARY KEY,
-    incident_number BIGINT    NOT NULL,
+    incident_num    BIGINT    NOT NULL,
     incident_time   TIMESTAMP NOT NULL,
     category_id     INTEGER   NOT NULL REFERENCES categories   (category_id),
     description_id  INTEGER   NOT NULL REFERENCES descriptions (description_id),
@@ -83,19 +127,49 @@ CREATE TABLE crime
     pd_id           BIGINT    NOT NULL
 );
 
-INSERT INTO crime (incident_number, incident_time, category_id, description_id, district_id, resolution_id, address_id, location, pd_id)
-SELECT incident_id::bigint,
-       date::timestamp + time::interval,
+CREATE TABLE train
+(
+    incident_id     SERIAL    NOT NULL PRIMARY KEY,
+    incident_time   TIMESTAMP NOT NULL,
+    category_id     INTEGER   NOT NULL REFERENCES categories   (category_id),
+    description_id  INTEGER   NOT NULL REFERENCES descriptions (description_id),
+    district_id     INTEGER   NOT NULL REFERENCES districts    (district_id),
+    resolution_id   INTEGER   NOT NULL REFERENCES resolutions  (resolution_id),
+    address_id      INTEGER   NOT NULL REFERENCES addresses    (address_id),
+    location        POINT     NOT NULL,
+    pd_id           BIGINT    NOT NULL
+);
+
+    date            TEXT,
+    category        TEXT,
+    description     TEXT,
+    day_of_week     TEXT,
+    district        TEXT,
+    resolution      TEXT,
+    address         TEXT,
+    x               TEXT,
+    y               TEXT
+
+
+-- LOAD DATA
+BEGIN;
+INSERT INTO incidents (incident_num, incident_time, category_id, description_id, district_id, resolution_id, address_id, location, pd_id)
+SELECT incident_id::BIGINT,
+       date::TIMESTAMP + time::INTERVAL,
        category_id,
        description_id,
        district_id,
        resolution_id,
        address_id,
-       POINT(y::numeric, x::numeric),
-       pd_id::bigint
-FROM staging.crime
+       POINT(y::NUMERIC, x::NUMERIC),
+       pd_id::BIGINT
+FROM staging.incidents
 NATURAL JOIN addresses
 NATURAL JOIN resolutions
 NATURAL JOIN descriptions
 NATURAL JOIN categories
 NATURAL JOIN districts;
+END;
+
+-- DELETE STAGING DATA
+drop table staging.incidents;
