@@ -129,26 +129,36 @@ CREATE TABLE incidents
 
 CREATE TABLE train
 (
-    incident_id     SERIAL    NOT NULL PRIMARY KEY,
+    train_id        SERIAL    NOT NULL PRIMARY KEY,
     incident_time   TIMESTAMP NOT NULL,
     category_id     INTEGER   NOT NULL REFERENCES categories   (category_id),
     description_id  INTEGER   NOT NULL REFERENCES descriptions (description_id),
     district_id     INTEGER   NOT NULL REFERENCES districts    (district_id),
     resolution_id   INTEGER   NOT NULL REFERENCES resolutions  (resolution_id),
     address_id      INTEGER   NOT NULL REFERENCES addresses    (address_id),
-    location        POINT     NOT NULL,
-    pd_id           BIGINT    NOT NULL
+    location        POINT     NOT NULL
 );
 
-    date            TEXT,
-    category        TEXT,
-    description     TEXT,
-    day_of_week     TEXT,
-    district        TEXT,
-    resolution      TEXT,
-    address         TEXT,
-    x               TEXT,
-    y               TEXT
+CREATE TABLE test
+(
+    test_id         SERIAL    NOT NULL PRIMARY KEY,
+    incident_num    BIGINT    NOT NULL,
+    incident_time   TIMESTAMP NOT NULL,
+    district_id     INTEGER   NOT NULL REFERENCES districts    (district_id),
+    address_id      INTEGER   NOT NULL REFERENCES addresses    (address_id),
+    location        POINT     NOT NULL
+);
+
+CREATE TABLE answers
+(
+    answer_id       SERIAL    NOT NULL PRIMARY KEY,
+    incident_num    BIGINT    NOT NULL,
+    incident_time   TIMESTAMP NOT NULL,
+    category_id     INTEGER   NOT NULL REFERENCES categories   (category_id),
+    district_id     INTEGER   NOT NULL REFERENCES districts    (district_id),
+    address_id      INTEGER   NOT NULL REFERENCES addresses    (address_id),
+    location        POINT     NOT NULL
+);
 
 
 -- LOAD DATA
