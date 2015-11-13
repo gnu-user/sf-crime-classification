@@ -1,23 +1,56 @@
-import numpy as np
+import numpy as np 
 import pandas as pd
 from sklearn import svm, grid_search
 from sklearn.cross_validation import KFold
 import csv
 from sklearn.ensemble import RandomForestClassifier
-
 from datetime import datetime, date
 
-
-
 print("Reading in training data...")
-# raw_train = np.array(list(csv.reader(open("../../CrimeData/train.csv", "rb"), delimiter=',')))
-raw_train = pd.read_csv('../../CrimeData/train.csv')
+# raw_train = np.array(list(csv.reader(open("../data/train.csv", "rb"), delimiter=',')))
+raw_train = pd.read_csv('../data/train.csv')
 print("done")
 
 print("Reading in test data...")
-# raw_test = np.array(list(csv.reader(open("../../CrimeData/test.csv", "rb"), delimiter=',')))
-raw_test = pd.read_csv('../../CrimeData/test.csv')
+# raw_test = np.array(list(csv.reader(open("../data/test.csv", "rb"), delimiter=',')))
+raw_test = pd.read_csv('../data/test.csv')
 print("done")
+
+# Bin the GPS coordinates to ~100m radius precision
+raw_train.X, raw_train.Y = raw_train.X.round(decimals=3), raw_train.X.round(decimals=3)
+raw_test.X, raw_test.Y = raw_test.X.round(decimals=3), raw_test.X.round(decimals=3)
+
+# Map day of week to integers from 1 - 7
+raw_train.DayOfWeek = raw_train.DayOfWeek.astype('category')
+raw_train.Category = raw_train.Category.astype('category')
+raw_test.DayOfWeek = raw_test.DayOfWeek.astype('category')
+
+# Get the size of the long and lat bins
+print "TRAIN X bin: %d, Y bin: %d" % (len(raw_train.X.unique()), len(raw_train.Y.unique())) 
+
+# Add columns to pandas for year, month, hour
+raw_train['Year'] = raw_train.Dates.map(lambda date: datetime.strptime(date, '%Y-%m-%d %H:%M:%S').year)
+raw_train['Month'] = raw_train.Dates.map(lambda date: datetime.strptime(date, '%Y-%m-%d %H:%M:%S').month)
+raw_train['Hour'] = raw_train.Dates.map(lambda date: datetime.strptime(date, '%Y-%m-%d %H:%M:%S').hour)
+
+raw_test['Year'] = raw_test.Dates.map(lambda date: datetime.strptime(date, '%Y-%m-%d %H:%M:%S').year)
+raw_test['Month'] = raw_test.Dates.map(lambda date: datetime.strptime(date, '%Y-%m-%d %H:%M:%S').month)
+raw_test['Hour'] = raw_test.Dates.map(lambda date: datetime.strptime(date, '%Y-%m-%d %H:%M:%S').hour)
+
+# Delete unnecessary data columns, training should match test columns
+# Dates, Descript, PdDistrict, Resolution, Address
+raw_train.drop('Dates', axis=1, inplace=True)
+raw_train.drop('Descript', axis=1, inplace=True)
+raw_train.drop('PdDistrict', axis=1, inplace=True)
+raw_train.drop('Resolution', axis=1, inplace=True)
+raw_train.drop('Address', axis=1, inplace=True)
+
+raw_test.drop('Dates', axis=1, inplace=True)
+raw_test.drop('Dates', axis=1, inplace=True)
+raw_test.drop('Dates', axis=1, inplace=True)
+
+
+# Bin the data by year, month, hour
 
 # ['Id' 'Dates' 'DayOfWeek' 'PdDistrict' 'Address' 'X' 'Y']
 #print(raw_test[0])
@@ -51,18 +84,18 @@ days_of_week = list(set(raw_train['DayOfWeek']))
 # index in the corresponding array
 print("Creating training data frame")
 train_df_data = {'Dates': (dates.index(row) for row in train_dates),
-              'DaysOfWeek': (days_of_week.index(row) for row in raw_train['DayOfWeek']),
-              'X': raw_train['X'],
-              'Y': raw_train['Y']}
+                 'DaysOfWeek': (days_of_week.index(row) for row in raw_train['DayOfWeek']),
+                 'X': raw_train['X'],
+                 'Y': raw_train['Y']}
 train_df = pd.DataFrame(data=train_df_data, index=None)
 
 # create data frame representing the test data with data being converted to respective
 # index in the corresponding array
 print("Creating test data frame")
 test_df_data = {'Dates': (dates.index(row) for row in test_dates),
-              'DaysOfWeek': (days_of_week.index(row) for row in raw_test['DayOfWeek']),
-              'X': raw_test['X'],
-              'Y': raw_test['Y']}
+                'DaysOfWeek': (days_of_week.index(row) for row in raw_test['DayOfWeek']),
+                'X': raw_test['X'],
+                'Y': raw_test['Y']}
 test_df = pd.DataFrame(data=test_df_data, index=None)
 
 
