@@ -161,8 +161,7 @@ CREATE TABLE answers
 );
 
 
--- LOAD DATA
-BEGIN;
+-- LOAD ALL INCIDENTS DATA
 INSERT INTO incidents (incident_num, incident_time, category_id, description_id, district_id, resolution_id, address_id, location, pd_id)
 SELECT incident_id::BIGINT,
        date::TIMESTAMP + time::INTERVAL,
@@ -179,7 +178,33 @@ NATURAL JOIN resolutions
 NATURAL JOIN descriptions
 NATURAL JOIN categories
 NATURAL JOIN districts;
-END;
+
+
+-- LOAD TRAINING DATA
+INSERT INTO train (incident_time, category_id, description_id, district_id, resolution_id, address_id, location)
+SELECT date::TIMESTAMP,
+       category_id,
+       description_id,
+       district_id,
+       resolution_id,
+       address_id,
+       POINT(y::NUMERIC, x::NUMERIC)
+FROM staging.train
+NATURAL JOIN addresses
+NATURAL JOIN resolutions
+NATURAL JOIN descriptions
+NATURAL JOIN categories
+NATURAL JOIN districts;
+
+
+train_id        SERIAL    NOT NULL PRIMARY KEY,
+    incident_time   TIMESTAMP NOT NULL,
+    category_id     INTEGER   NOT NULL REFERENCES categories   (category_id),
+    description_id  INTEGER   NOT NULL REFERENCES descriptions (description_id),
+    district_id     INTEGER   NOT NULL REFERENCES districts    (district_id),
+    resolution_id   INTEGER   NOT NULL REFERENCES resolutions  (resolution_id),
+    address_id      INTEGER   NOT NULL REFERENCES addresses    (address_id),
+    location        POINT     NOT NULL
 
 -- DELETE STAGING DATA
 drop table staging.incidents;
