@@ -9,12 +9,18 @@ import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 
 
-train = pd.read_csv('../data/train.csv', parse_dates=['Dates'])[['Dates', 'X', 'Y', 'Category']]
+train = pd.read_csv('../data/train.csv', parse_dates=['Dates'])[['Dates', 'DayOfWeek', 'X', 'Y', 'Category']]
 
 
 # Extract year, month, hour and remove dates
 train['Year'], train['Month'], train['Hour'] = train.Dates.dt.year, train.Dates.dt.month, train.Dates.dt.hour
 train.drop('Dates', axis=1, inplace=True)
+
+# Map day of week to integers from 1 - 7
+print("Mapping day of the week")
+days_of_week = train.DayOfWeek.unique()
+days_of_week_dict = {days_of_week[x]: float(x) for x in range(len(days_of_week))}
+train.DayOfWeek = train.DayOfWeek.map(days_of_week_dict)
 
 train.X, train.Y = train.X.round(decimals=3), train.X.round(decimals=3)
 
@@ -27,16 +33,16 @@ y = train['Category'].astype('category')
 
 test = pd.read_csv('../data/test.csv', parse_dates=['Dates'])
 
-# Extract year, month, hour and remove dates
+# Extract year, month, hour, convert DayOfWeek and remove dates
 test['Year'], test['Month'], test['Hour'] = test.Dates.dt.year, test.Dates.dt.month, test.Dates.dt.hour
 test.drop('Dates', axis=1, inplace=True)
 test.X, test.Y = test.X.round(decimals=3), test.X.round(decimals=3)
-
-x_test = test[['Year', 'Month', 'Hour', 'X', 'Y']]
+test.DayOfWeek = test.DayOfWeek.map(days_of_week_dict)
+x_test = test[['Year', 'Month', 'Hour', 'DayOfWeek', 'X', 'Y']]
 
 print("Training")
 knn = KNeighborsClassifier(n_neighbors=40)
-knn.fit(train[['Year', 'Month', 'Hour', 'X', 'Y']], y)
+knn.fit(train[['Year', 'Month', 'Hour', 'DayOfWeek', 'X', 'Y']], y)
 
 print("Predicting")
 outcomes = knn.predict(x_test)
