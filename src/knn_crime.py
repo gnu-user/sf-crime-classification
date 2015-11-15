@@ -2,65 +2,43 @@
 Working from knn example posted at
 https://www.kaggle.com/wawanco/sf-crime/k-nearest-neighbour/code
 Original code only incorporated gps coodinates
+Currently on the sf-crime competition he is ranked 631/754
 '''
 import pandas as pd
 import numpy as np
-import math
-import zipfile
-import matplotlib.pyplot as plt
 from sklearn.neighbors import KNeighborsClassifier
 
 
-def llfun(act, pred):
-    """ Logloss function for 1/0 probability
-    """
-    return (-(~(act == pred)).astype(int) * math.log(1e-15)).sum() / len(act)
+train = pd.read_csv('../data/train.csv', parse_dates=['Dates'])[['Dates', 'X', 'Y', 'Category']]
 
 
-train = pd.read_csv('../data/train.csv', parse_dates=['Dates'])[['X', 'Y', 'Category']]
+# Extract year, month, hour and remove dates
+train['Year'], train['Month'], train['Hour'] = train.Dates.dt.year, train.Dates.dt.month, train.Dates.dt.hour
+train.drop('Dates', axis=1, inplace=True)
+
+train.X, train.Y = train.X.round(decimals=3), train.X.round(decimals=3)
 
 
-# Separate test and train set out of orignal train set.
-msk = np.random.rand(len(train)) < 0.8
-knn_train = train[msk]
-knn_test = train[~msk]
-n = len(knn_test)
+print(train[:5])
 
-
-print("Original size: %s" % len(train))
-print("Train set: %s" % len(knn_train))
-print("Test set: %s" % len(knn_test))
-
-# Prepare data sets
-x = knn_train[['X', 'Y']]
-y = knn_train['Category'].astype('category')
-actual = knn_test['Category'].astype('category')
-
-'''
-# Fit
-logloss = []
-for i in range(1, 50, 1):
-    knn = KNeighborsClassifier(n_neighbors=i)
-    knn.fit(x, y)
-
-    # Predict on test set
-    outcome = knn.predict(knn_test[['X', 'Y']])
-
-    # Logloss
-    logloss.append(llfun(actual, outcome))
-
-plt.plot(logloss)
-plt.savefig('n_neighbors_vs_logloss.png')
-'''
+y = train['Category'].astype('category')
 
 # Submit for K=40
-print("Training")
+
 test = pd.read_csv('../data/test.csv', parse_dates=['Dates'])
-x_test = test[['X', 'Y']]
+
+# Extract year, month, hour and remove dates
+test['Year'], test['Month'], test['Hour'] = test.Dates.dt.year, test.Dates.dt.month, test.Dates.dt.hour
+test.drop('Dates', axis=1, inplace=True)
+test.X, test.Y = test.X.round(decimals=3), test.X.round(decimals=3)
+
+x_test = test[['Year', 'Month', 'Hour', 'X', 'Y']]
+
+print("Training")
 knn = KNeighborsClassifier(n_neighbors=40)
+knn.fit(train[['Year', 'Month', 'Hour', 'X', 'Y']], y)
 
 print("Predicting")
-knn.fit(x, y)
 outcomes = knn.predict(x_test)
 
 submit = pd.DataFrame({'Id': test.Id.tolist()})
