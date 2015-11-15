@@ -93,7 +93,9 @@ for year in range(distinct_years.max(),distinct_years.min() - 1, -1):
         month_train_category = month_train_df['Category']
         month_train_df = month_train_df[['Hour', 'DayOfWeek', 'X', 'Y']]
         month_test_df = year_test_df.where(year_test_df.Month == month)[['Hour', 'DayOfWeek', 'X', 'Y']]
+        
 
+        
         print("Training on {0} rows".format(len(month_train_df)))
         #filter NaN vaule rows
         available_train = pd.notnull(month_train_category)
@@ -101,13 +103,24 @@ for year in range(distinct_years.max(),distinct_years.min() - 1, -1):
         month_train_df = month_train_df[available_train]
         month_train_category = month_train_category[available_train]
         month_test_df = month_test_df[available_test]
+
+        #standlize the data
+        month_train_df,scaler = preprocess_data(month_train_df)
+        month_test_df,_ = preprocess_data(month_test_df, scaler)
         
         #train model
-        clf = svm.SVC()
+        clf = svm.SVC(probability = True)
         clf.fit(month_train_df, month_train_category)
         print("Predicting on {0} rows".format(month_test_df))
-        predictions = [predictions, pd.DataFrame(clf.predict(month_test_df))]
-        predictions = pd.concat(predictions)
+        temp_predictions = clf.predict_proba(month_test_df)
+        
+        #concatenates results
+        temp_predictions = pd.DataFrame(temp_predictions)
+        temp_predictions.columns = clf.classes_
+        #print temp_predictions
+ 
+        predictions = [predictions, temp_predictions]
+        predictions = pd.concat(predictions, axis=1)
 
 # address NaN values
 predictions[pd.isnull(predictions)] = 0
