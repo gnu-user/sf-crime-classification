@@ -116,7 +116,7 @@ for year in range(distinct_years.max(), distinct_years.min(), -1):
         week_test_df = week_test_df[available_test]
         
         #train model
-        clf = svm.SVC(probablility=True)
+        clf = svm.SVC(probability=True)
         clf.fit(week_train_df, week_train_category)
         print("Predicting on {0} rows".format(week_test_df))
         predictions = [predictions, pd.DataFrame(clf.predict_proba(week_test_df))]
