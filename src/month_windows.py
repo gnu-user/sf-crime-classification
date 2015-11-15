@@ -76,7 +76,7 @@ predictions = np.array
 # loop over years
 print("Starting the training/testing loop")
 distinct_years = raw_train.Year.unique()
-for year in range(distinct_years.min(),distinct_years.max() + 1):
+for year in range(distinct_years.max(),distinct_years.min() - 1, -1):
 
     # create subset of data of current year
     print("Creating subset of data for year {0}".format(year))
@@ -86,7 +86,7 @@ for year in range(distinct_years.min(),distinct_years.max() + 1):
     # loop over months, and remove nan value
     distinct_months = year_train_df.Month.unique()
     distinct_months = distinct_months[~np.isnan(distinct_months)]
-    for month in range(int(distinct_months.min()), int(distinct_months.max()) + 1):
+    for month in range(int(distinct_months.max()), int(distinct_months.min()) - 1 , -1):
         # create subset of data of current year
         print("Creating subset of data for month {0}".format(month))
         month_train_df = year_train_df.where(year_train_df.Month == month)
