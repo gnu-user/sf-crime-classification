@@ -109,15 +109,18 @@ for year in range(distinct_years.max(),distinct_years.min() - 1, -1):
         predictions = [predictions, pd.DataFrame(clf.predict(month_test_df))]
         predictions = pd.concat(predictions)
 
+# address NaN values
+predictions[pd.isnull(predictions)] = 0
 
+'''
 print('tranform predictions to submission format')		
 y = raw_train['Category'].astype('category')
 submit = pd.DataFrame({'Id': xrange(len(raw_test))})
 for category in y.cat.categories:
     submit[category] = np.where(predictions == category, 1, 0)
-	
+'''	
 print("Saving to csv")
-submit.to_csv('../results/sf-crime-submission.csv', index = False)
+predictions.to_csv('../results/sf-crime-submission.csv', index = False)
 
 '''
 print("Casting data")
