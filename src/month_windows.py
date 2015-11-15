@@ -26,14 +26,14 @@ raw_test.X, raw_test.Y = raw_test.X.round(decimals=3), raw_test.X.round(decimals
 
 # Map day of week to integers from 1 - 7
 print("Mapping day of the week")
-days_of_week = list(set(raw_train.DayOfWeek))
+days_of_week = raw_train.DayOfWeek.unique()
 days_of_week_dict = {days_of_week[x]: float(x) for x in range(len(days_of_week))}
 raw_train.DayOfWeek = raw_train.DayOfWeek.map(days_of_week_dict)
 raw_test.DayOfWeek = raw_test.DayOfWeek.map(days_of_week_dict)
 
 print("Mapping categories")
 
-categories = list(set(raw_train.Category))
+categories = raw_train.Category.unique()
 categories_dict = {categories[x]: float(x) for x in range(len(categories))}
 # raw_train_category = raw_train.Category.map(categories_dict)
 
