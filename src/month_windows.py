@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn import svm
 from datetime import datetime, date
+from sklearn.preprocessing import StandardScaler
 
 print("Reading in training data")
 # raw_train = np.array(list(csv.reader(open("../data/train.csv", "rb"), delimiter=',')))
@@ -62,7 +63,12 @@ raw_test.drop('Dates', axis=1, inplace=True)
 raw_test.drop('Id', axis=1, inplace=True)
 
 
-
+def preprocess_data(X, scaler=None):
+	if not scaler:
+		scaler = StandardScaler()
+		scaler.fit(X)
+	X = scaler.transform(X)
+	return X, scaler
 
 # Both the training and test data goes from most recent to oldest
 # want to train over month to predict month
