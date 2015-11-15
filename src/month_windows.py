@@ -71,7 +71,7 @@ raw_test.drop('Id', axis=1, inplace=True)
 # ***test does not include category
 
 # create predictions data frame to append to
-predictions = np.array
+predictions = pd.DataFrame()
 
 
 print("Starting the training/testing loop")
@@ -106,10 +106,8 @@ for year in range(distinct_years.max(),distinct_years.min() - 1, -1):
         clf = svm.SVC()
         clf.fit(month_train_df, month_train_category)
         print("Predicting on {0} rows".format(month_test_df))
-        predictions = [predictions, clf.predict(month_test_df)]
-
-print("Length of test data: {0}".format(len(raw_test)))
-print("Length of predictions: {0}".format(len(predictions)))
+        predictions = [predictions, pd.DataFrame(clf.predict(month_test_df))]
+        predictions = pd.concat(predictions)
 
 print("Saving to csv")
 np.savetxt('../results/sf-crime-submission.csv', predictions, fmt='%f', delimiter=',')
