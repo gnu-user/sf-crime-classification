@@ -76,7 +76,7 @@ predictions = np.array
 # loop over years
 print("Starting the training/testing loop")
 distinct_years = set(raw_train.Year)
-for year in range(min(distinct_years),max(distinct_years)):
+for year in range(min(distinct_years),max(distinct_years) + 1):
 
     # create subset of data of current year
     print("Creating subset of data for year {0}".format(year))
@@ -84,8 +84,8 @@ for year in range(min(distinct_years),max(distinct_years)):
     year_test_df = raw_test.where(raw_test.Year == year)[['Month', 'Hour', 'DayOfWeek', 'X', 'Y']]
 
     # loop over months
-    distinct_months = np.array(set(year_train_df.Month))
-    for month in range(min(distinct_months), max(distinct_months)):
+    distinct_months = set(year_train_df.Month)
+    for month in range(min(distinct_months), max(distinct_months) + 1):
         # create subset of data of current year
         print("Creating subset of data for month {0}".format(month))
         month_train_df = year_train_df.where(year_train_df.Month == month)
