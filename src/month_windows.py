@@ -73,7 +73,7 @@ raw_test.drop('Id', axis=1, inplace=True)
 # create predictions data frame to append to
 predictions = np.array
 
-# loop over years
+
 print("Starting the training/testing loop")
 distinct_years = raw_train.Year.unique()
 for year in range(distinct_years.max(),distinct_years.min() - 1, -1):
@@ -95,6 +95,14 @@ for year in range(distinct_years.max(),distinct_years.min() - 1, -1):
         month_test_df = year_test_df.where(year_test_df.Month == month)[['Hour', 'DayOfWeek', 'X', 'Y']]
 
         print("Training on {0} rows".format(len(month_train_df)))
+        #filter NaN vaule rows
+        available_train = pd.notnull(month_train_category)
+        available_test = pd.notnull(month_test_df['X'])
+        month_train_df = month_train_df[available_train]
+        month_train_category = month_train_category[available_train]
+        month_test_df = month_test_df[available_test]
+        
+        #train model
         clf = svm.SVC()
         clf.fit(month_train_df, month_train_category)
         print("Predicting on {0} rows".format(month_test_df))
