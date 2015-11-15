@@ -117,7 +117,7 @@ for category in y.cat.categories:
     submit[category] = np.where(predictions == category, 1, 0)
 	
 print("Saving to csv")
-np.savetxt('../results/sf-crime-submission.csv', submit, fmt='%f', delimiter=',')
+submit.to_csv('../results/sf-crime-submission.csv', index = False)
 
 '''
 print("Casting data")
