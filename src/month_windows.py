@@ -96,9 +96,9 @@ for year in range(distinct_years.min(),distinct_years.max() + 1):
 
         print("Training on {0} rows".format(len(month_train_df)))
         clf = svm.SVC()
-        clf.fit(month_train_df[:200], month_train_category[:200])
+        clf.fit(month_train_df, month_train_category)
         print("Predicting on {0} rows".format(month_test_df))
-        predictions = [predictions, clf.predict(month_test_df[:200])]
+        predictions = [predictions, clf.predict(month_test_df)]
 
 print("Length of test data: {0}".format(len(raw_test)))
 print("Length of predictions: {0}".format(len(predictions)))
