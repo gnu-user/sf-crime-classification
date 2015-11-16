@@ -124,9 +124,8 @@ for year in range(distinct_years.max(),distinct_years.min() - 1, -1):
         temp_predictions = pd.DataFrame(temp_predictions)
         temp_predictions.columns = clf.classes_
         #print temp_predictions
- 
-        predictions = [predictions, temp_predictions]
-        predictions = pd.concat(predictions, axis=1)
+        predictions = predictions.append(temp_predictions, ignore_index=True)
+        print predictions
 
 # address NaN values
 predictions[pd.isnull(predictions)] = 0
