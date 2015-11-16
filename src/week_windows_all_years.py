@@ -121,16 +121,14 @@ for year in range(distinct_years.max(),distinct_years.min() - 1, -1):
         temp_predictions = pd.DataFrame(temp_predictions)
         temp_predictions.columns = clf.classes_
         #print temp_predictions
- 
-        predictions = [predictions, temp_predictions]
-        predictions = pd.concat(predictions, axis=1)
+        predictions = predictions.append(temp_predictions, ignore_index=True)
 
 # address NaN values
 predictions[pd.isnull(predictions)] = 0
 
 
 print("Saving to csv")
-predictions.to_csv('../results/sf-crime-submission-by-week.csv', header=True, index=True, index_label="Id")
+predictions.to_csv('../results/sf-crime-submission.csv', index_label="Id", na_rep=0)
 
 
 print("Done!")
