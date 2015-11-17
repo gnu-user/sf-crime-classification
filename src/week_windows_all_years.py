@@ -86,26 +86,42 @@ for year in range(distinct_years.max(),distinct_years.min() - 1, -1):
     year_train_df = raw_train.where(raw_train.Year == year)[['Week', 'Hour', 'DayOfWeek', 'X', 'Y', 'Category']]
     year_test_df = raw_test.where(raw_test.Year == year)[['Week', 'Hour', 'DayOfWeek', 'X', 'Y']]
 
-    # loop over months, and remove nan value
-    distinct_weeks = year_train_df.Week.unique()
+    # loop over weeks within the TEST data
+    distinct_weeks = year_test_df.Week.unique()
+    print("Distinct weeks in test year: ")
+    print(distinct_weeks)
     distinct_weeks = distinct_weeks[~np.isnan(distinct_weeks)]
     for week in range(int(distinct_weeks.max()), int(distinct_weeks.min())-1, -2):
         # create subset of data of current year
         print("Creating subset of data for week {0}".format(week))
-        week_train_df = year_train_df.where(year_train_df.Week == week)
+
+        week_test_df = year_test_df.where(year_test_df.Week == week)[['Hour', 'DayOfWeek', 'X', 'Y']]
+
+        # select the previous week's train data to train on
+        week_train_df = year_train_df.where(year_train_df.Week == week-1)
         week_train_category = week_train_df['Category']
         week_train_df = week_train_df[['Hour', 'DayOfWeek', 'X', 'Y']]
-        week_test_df = year_test_df.where(year_test_df.Week == week-1)[['Hour', 'DayOfWeek', 'X', 'Y']]
-        
+        available_train = pd.notnull(week_train_category)
+        week_train_df = week_train_df[available_train]
 
+        # if no data from previous week, then train using the week after the test week
+        if week_train_df.shape == (0, 4):
+            week_train_df = year_train_df.where(year_train_df.Week == week+1)
+            week_train_category = week_train_df['Category']
+            week_train_df = week_train_df[['Hour', 'DayOfWeek', 'X', 'Y']]
+            available_train = pd.notnull(week_train_category)
+            week_train_df = week_train_df[available_train]
         
         print("Training on {0} rows".format(len(week_train_df)))
         #filter NaN vaule rows
-        available_train = pd.notnull(week_train_category)
+
         available_test = pd.notnull(week_test_df['X'])
-        week_train_df = week_train_df[available_train]
+
         week_train_category = week_train_category[available_train]
         week_test_df = week_test_df[available_test]
+
+        print("Shape after filter: ")
+        print(week_train_df.shape)
 
         #standlize the data
         week_train_df, scaler = preprocess_data(week_train_df)
@@ -114,7 +130,7 @@ for year in range(distinct_years.max(),distinct_years.min() - 1, -1):
         #train model
         clf = svm.SVC(probability=True)
         clf.fit(week_train_df, week_train_category)
-        print("Predicting on {0} rows".format(week_test_df))
+        print("Predicting on {0} rows".format(len(week_test_df)))
         temp_predictions = clf.predict_proba(week_test_df)
         
         #concatenates results
@@ -126,6 +142,10 @@ for year in range(distinct_years.max(),distinct_years.min() - 1, -1):
 # address NaN values
 predictions[pd.isnull(predictions)] = 0
 
+print("Shape of raw test data:")
+print(raw_test.shape)
+print("Shape of predictions data:")
+print(predictions.shape)
 
 print("Saving to csv")
 predictions.to_csv('../results/sf-crime-submission.csv', index_label="Id", na_rep=0)
