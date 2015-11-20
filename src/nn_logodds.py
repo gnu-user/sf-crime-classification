@@ -19,7 +19,7 @@ from keras.utils import np_utils
 from copy import deepcopy
 
 # NEURAL NET PARAMETERS
-N_EPOCHS=20
+N_EPOCHS=2000
 N_HN=128
 N_LAYERS=1
 DP=0.5
@@ -235,4 +235,4 @@ collist=features_sub.columns.tolist()
 features_sub[collist]=scaler.transform(features_sub[collist])
 predDF=pd.DataFrame(model.predict_proba(features_sub.as_matrix(),verbose=0),columns=sorted(labels.unique()))
 print "SAVING FINAL RESULTS..."
-predDF.to_csv("crimeSF_NN_logodds.csv",index_label="Id",na_rep="0")
+predDF.to_csv("sf-crime_NN_logodds.csv",index_label="Id",na_rep="0")
