@@ -42,6 +42,75 @@ DP = args.dropout
 OPTIMIZER = args.optimizer
 
 
+class BetterLogger(Callback):
+    def __init__(self, monitor='loss', patience=100, verbose=1):
+        super(Callback, self).__init__()
+
+        self.monitor = monitor
+        self.patience = patience
+        self.verbose = verbose
+        self.best = np.Inf
+        self.wait = 0
+
+    def on_train_begin(self, logs={}):
+        self.nb_epoch = self.params['nb_epoch']
+        self.times = deque(maxlen=10)
+        self.epoch = []
+        self.history = {}
+
+    def on_epoch_begin(self, epoch, logs={}):
+        self.seen = 0
+        self.totals = {}
+        self.start_time = time()
+
+    def on_batch_end(self, batch, logs={}):
+        batch_size = logs.get('size', 0)
+        self.seen += batch_size
+        for k, v in logs.items():
+            if k in self.totals:
+                self.totals[k] += v * batch_size
+            else:
+                self.totals[k] = v * batch_size
+
+    def on_epoch_end(self, epoch, logs={}):
+        self.epoch.append(epoch)
+        for k, v in self.totals.items():
+            if k not in self.history:
+                self.history[k] = []
+            self.history[k].append(v / self.seen)
+
+        for k, v in logs.items():
+            if k not in self.history:
+                self.history[k] = []
+            self.history[k].append(v)
+
+        dt = time() - self.start_time
+        self.times.append(dt)
+        if self.verbose:
+            print('Epoch: {:5d}/{}\tTime: {:.1f}s\tLoss: {:.4f}\tETA: {}'
+                  .format(epoch + 1, self.nb_epoch, dt,
+                          self.history['loss'][-1],
+                          str(timedelta
+                              (seconds=int((self.nb_epoch - epoch) *
+                                           (sum(self.times) /
+                                            len(self.times)))))))
+
+        current = self.history[self.monitor][-1]
+        if current is None:
+            warnings.warn("Early stopping requires %s available!"
+                          .format(self.monitor), RuntimeWarning)
+
+        if current < self.best:
+            self.best = current
+            self.wait = 0
+        else:
+            if self.wait >= self.patience:
+                if self.verbose > 0:
+                    print("Epoch %05d: early stopping" % (epoch))
+                self.model.stop_training = True
+            self.wait += 1
+
+
 def parse_time(x):
     DD = datetime.strptime(x, "%Y-%m-%d %H:%M:%S")
     time = DD.hour   # *60+DD.minute
