@@ -61,7 +61,8 @@ def get_season(x):
 
 
 def build_and_fit_model(X_train, y_train, X_test=None, y_test=None, hn=32,
-                        dp=0.5, layers=1, epochs=1, batches=64, verbose=0):
+                        dp=0.5, layers=1, epochs=1, batches=64, verbose=0,
+                        optimizer='adam'):
     input_dim = X_train.shape[1]
     output_dim = len(labels_train.unique())
     Y_train = np_utils.to_categorical(y_train
@@ -82,7 +83,10 @@ def build_and_fit_model(X_train, y_train, X_test=None, y_test=None, hn=32,
 
     model.add(Dense(output_dim, init='glorot_uniform'))
     model.add(Activation('softmax'))
-    model.compile(loss='categorical_crossentropy', optimizer='adam')
+    if optimizer == 'sgd':
+        optimizer = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+
+    model.compile(loss='categorical_crossentropy', optimizer=optimizer)
 
     if X_test is not None:
         Y_test = np_utils.to_categorical(y_test
