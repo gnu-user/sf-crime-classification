@@ -175,7 +175,7 @@ def build_and_fit_model(X_train, y_train, X_test=None, y_test=None, hn=32,
         test_score = log_loss(y_test, model.predict_proba(X_test, verbose=0))
     else:
         model.fit(X_train, Y_train, nb_epoch=epochs, batch_size=batches,
-                  verbose=verbose)
+                  verbose=0, callbacks=[BetterLogger()])
         fitting = 0
         test_score = 0
     return test_score, fitting, model
