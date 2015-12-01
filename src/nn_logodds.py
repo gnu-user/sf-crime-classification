@@ -246,7 +246,8 @@ print("FINAL MODEL TRAINING...")
 score, fitting, model = build_and_fit_model(features.as_matrix(), labels,
                                             hn=N_HN,
                                             layers=N_LAYERS, epochs=N_EPOCHS,
-                                            verbose=2, dp=DP)
+                                            verbose=2, dp=DP,
+                                            optimizer=OPTIMIZER)
 
 # Results from final model
 print("all", log_loss(labels, model.predict_proba(features.as_matrix(),
