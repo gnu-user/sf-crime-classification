@@ -17,12 +17,22 @@ from keras.layers.normalization import BatchNormalization
 from keras.models import Sequential
 from keras.utils import np_utils
 from copy import deepcopy
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--epochs', type=int, default=2000)
+parser.add_argument('--nodes', type=int, default=128)
+parser.add_argument('--layers', type=int, default=1)
+parser.add_argument('--dropout', type=float, default=0.5)
+parser.add_argument('--optimizer', default='adam', choices=['adam', 'sgd'])
+
+args = parser.parse_args()
 
 # NEURAL NET PARAMETERS
-N_EPOCHS = 2000
-N_HN = 128
-N_LAYERS = 1
-DP = 0.5
+N_EPOCHS = args.epochs
+N_HN = args.nodes
+N_LAYERS = args.layers
+DP = args.dropout
+OPTIMIZER = args.optimizer
 
 
 def parse_time(x):
