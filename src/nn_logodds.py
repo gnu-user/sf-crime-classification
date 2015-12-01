@@ -16,7 +16,14 @@ from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.normalization import BatchNormalization
 from keras.models import Sequential
 from keras.utils import np_utils
+from keras.optimizers import SGD
+from keras.callbacks import Callback
 from copy import deepcopy
+from collections import deque
+from time import time
+from datetime import timedelta
+import warnings
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, default=2000)
