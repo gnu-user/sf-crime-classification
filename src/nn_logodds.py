@@ -221,25 +221,25 @@ features.index = range(len(features))
 labels.index = range(len(labels))
 
 
-# Run the data through the NN
-print("INITIAL MODEL TRAINING...")
-score, fitting, model = build_and_fit_model(features_train.as_matrix(),
-                                            labels_train,
-                                            X_test=features_test.as_matrix(),
-                                            y_test=labels_test,
-                                            hn=N_HN, layers=N_LAYERS,
-                                            epochs=N_EPOCHS, verbose=2, dp=DP)
+# # Run the data through the NN
+# print("INITIAL MODEL TRAINING...")
+# score, fitting, model = build_and_fit_model(features_train.as_matrix(),
+#                                             labels_train,
+#                                             X_test=features_test.as_matrix(),
+#                                             y_test=labels_test,
+#                                             hn=N_HN, layers=N_LAYERS,
+#                                             epochs=N_EPOCHS, verbose=2, dp=DP)
 
 
-# Print the results
-print("all", log_loss(labels, model.predict_proba(features.as_matrix(),
-                                                  verbose=0)))
-print("train", log_loss(labels_train, model.predict_proba(features_train
-                                                          .as_matrix(),
-                                                          verbose=0)))
-print("test", log_loss(labels_test, model.predict_proba(features_test
-                                                        .as_matrix(),
-                                                        verbose=0)))
+# # Print the results
+# print("all", log_loss(labels, model.predict_proba(features.as_matrix(),
+#                                                   verbose=0)))
+# print("train", log_loss(labels_train, model.predict_proba(features_train
+#                                                           .as_matrix(),
+#                                                           verbose=0)))
+# print("test", log_loss(labels_test, model.predict_proba(features_test
+#                                                         .as_matrix(),
+#                                                         verbose=0)))
 
 # Train the final model
 print("FINAL MODEL TRAINING...")
