@@ -136,11 +136,12 @@ def get_season(x):
     return summer, fall, winter, spring
 
 
-def build_and_fit_model(X_train, y_train, X_test=None, y_test=None, hn=32,
+def build_and_fit_model(X_train, y_train,
+                        X_test=None, y_test=None, hn=32,
                         dp=0.5, layers=1, epochs=1, batches=64, verbose=0,
                         optimizer='adam'):
     input_dim = X_train.shape[1]
-    output_dim = len(labels_train.unique())
+    output_dim = len(y_train.unique())
     Y_train = np_utils.to_categorical(y_train
                                       .cat
                                       .rename_categories(
@@ -242,136 +243,143 @@ def parse_data(df, logodds, logoddsPA):
         labels = None
     return features, labels
 
-# Import training data
-print("PROCESSING TRAINING DATA...")
-trainDF = pd.read_csv("../data/train.csv")
 
-# Clean up wrong X and Y values (very few of them)
-xy_scaler = StandardScaler()
-xy_scaler.fit(trainDF[["X", "Y"]])
-trainDF[["X", "Y"]] = xy_scaler.transform(trainDF[["X", "Y"]])
-trainDF = trainDF[abs(trainDF["Y"]) < 100]
-trainDF.index = range(len(trainDF))
+def train_and_run(trainDF, testDF, epochs):
+    # Import training data
+    print("PROCESSING TRAINING DATA...")
 
-# This takes a while...
-addresses = sorted(trainDF["Address"].unique())
-categories = sorted(trainDF["Category"].unique())
-C_counts = trainDF.groupby(["Category"]).size()
-A_C_counts = trainDF.groupby(["Address", "Category"]).size()
-A_counts = trainDF.groupby(["Address"]).size()
-logodds = {}
-logoddsPA = {}
-MIN_CAT_COUNTS = 2
-default_logodds = (np.log(C_counts/len(trainDF)) -
-                   np.log(1.0-C_counts/float(len(trainDF))))
-for addr in addresses:
-    PA = A_counts[addr]/float(len(trainDF))
-    logoddsPA[addr] = np.log(PA)-np.log(1.-PA)
-    logodds[addr] = deepcopy(default_logodds)
-    for cat in A_C_counts[addr].keys():
-        if (((A_C_counts[addr][cat] > MIN_CAT_COUNTS) and
-             (A_C_counts[addr][cat] < A_counts[addr]))):
-            PA = A_C_counts[addr][cat]/float(A_counts[addr])
-            logodds[addr][categories.index(cat)] = np.log(PA)-np.log(1.0-PA)
-    logodds[addr] = pd.Series(logodds[addr])
-    logodds[addr].index = range(len(categories))
+    # Clean up wrong X and Y values (very few of them)
+    xy_scaler = StandardScaler()
+    xy_scaler.fit(trainDF[["X", "Y"]])
+    trainDF[["X", "Y"]] = xy_scaler.transform(trainDF[["X", "Y"]])
+    trainDF = trainDF[abs(trainDF["Y"]) < 100]
+    trainDF.index = range(len(trainDF))
 
-features, labels = parse_data(trainDF, logodds, logoddsPA)
+    # This takes a while...
+    addresses = sorted(trainDF["Address"].unique())
+    categories = sorted(trainDF["Category"].unique())
+    C_counts = trainDF.groupby(["Category"]).size()
+    A_C_counts = trainDF.groupby(["Address", "Category"]).size()
+    A_counts = trainDF.groupby(["Address"]).size()
+    logodds = {}
+    logoddsPA = {}
+    MIN_CAT_COUNTS = 2
+    default_logodds = (np.log(C_counts/len(trainDF)) -
+                       np.log(1.0-C_counts/float(len(trainDF))))
+    for addr in addresses:
+        PA = A_counts[addr]/float(len(trainDF))
+        logoddsPA[addr] = np.log(PA)-np.log(1.-PA)
+        logodds[addr] = deepcopy(default_logodds)
+        for cat in A_C_counts[addr].keys():
+            if (((A_C_counts[addr][cat] > MIN_CAT_COUNTS) and
+                 (A_C_counts[addr][cat] < A_counts[addr]))):
+                PA = A_C_counts[addr][cat]/float(A_counts[addr])
+                logodds[addr][categories.index(cat)] = (np.log(PA) -
+                                                        np.log(1.0-PA))
+        logodds[addr] = pd.Series(logodds[addr])
+        logodds[addr].index = range(len(categories))
 
-# num_feature_list = ["Time", "Day", "Month", "Year", "DayOfWeek"]
-collist = features.columns.tolist()
-scaler = StandardScaler()
-scaler.fit(features)
-features[collist] = scaler.transform(features)
+    features, labels = parse_data(trainDF, logodds, logoddsPA)
 
-sss = StratifiedShuffleSplit(labels, train_size=0.5)
-for train_index, test_index in sss:
-    features_train, features_test = (features.iloc[train_index],
-                                     features.iloc[test_index])
-    labels_train, labels_test = labels[train_index], labels[test_index]
-features_test.index = range(len(features_test))
-features_train.index = range(len(features_train))
-labels_train.index = range(len(labels_train))
-labels_test.index = range(len(labels_test))
-features.index = range(len(features))
-labels.index = range(len(labels))
+    # num_feature_list = ["Time", "Day", "Month", "Year", "DayOfWeek"]
+    collist = features.columns.tolist()
+    scaler = StandardScaler()
+    scaler.fit(features)
+    features[collist] = scaler.transform(features)
 
+    sss = StratifiedShuffleSplit(labels, train_size=0.5)
+    for train_index, test_index in sss:
+        features_train, features_test = (features.iloc[train_index],
+                                         features.iloc[test_index])
+        labels_train, labels_test = labels[train_index], labels[test_index]
+    features_test.index = range(len(features_test))
+    features_train.index = range(len(features_train))
+    labels_train.index = range(len(labels_train))
+    labels_test.index = range(len(labels_test))
+    features.index = range(len(features))
+    labels.index = range(len(labels))
 
-# # Run the data through the NN
-# print("INITIAL MODEL TRAINING...")
-# score, fitting, model = build_and_fit_model(features_train.as_matrix(),
-#                                             labels_train,
-#                                             X_test=features_test.as_matrix(),
-#                                             y_test=labels_test,
-#                                             hn=N_HN, layers=N_LAYERS,
-#                                             epochs=N_EPOCHS, verbose=2, dp=DP)
+    # # Run the data through the NN
+    # print("INITIAL MODEL TRAINING...")
+    # score, fitting, model = build_and_fit_model(features_train.as_matrix(),
+    #                                             labels_train,
+    #                                             X_test=features_test.as_matrix(),
+    #                                             y_test=labels_test,
+    #                                             hn=N_HN, layers=N_LAYERS,
+    #                                             epochs=N_EPOCHS, verbose=2,
+    #                                             dp=DP)
 
+    # # Print the results
+    # print("all", log_loss(labels, model.predict_proba(features.as_matrix(),
+    #                                                   verbose=0)))
+    # print("train", log_loss(labels_train, model.predict_proba(features_train
+    #                                                           .as_matrix(),
+    #                                                           verbose=0)))
+    # print("test", log_loss(labels_test, model.predict_proba(features_test
+    #                                                         .as_matrix(),
+    #                                                         verbose=0)))
 
-# # Print the results
-# print("all", log_loss(labels, model.predict_proba(features.as_matrix(),
-#                                                   verbose=0)))
-# print("train", log_loss(labels_train, model.predict_proba(features_train
-#                                                           .as_matrix(),
-#                                                           verbose=0)))
-# print("test", log_loss(labels_test, model.predict_proba(features_test
-#                                                         .as_matrix(),
-#                                                         verbose=0)))
+    # Train the final model
+    print("FINAL MODEL TRAINING...")
+    score, fitting, model = build_and_fit_model(features.as_matrix(), labels,
+                                                hn=N_HN,
+                                                layers=N_LAYERS, epochs=epochs,
+                                                verbose=2, dp=DP,
+                                                optimizer=OPTIMIZER)
 
-# Train the final model
-print("FINAL MODEL TRAINING...")
-score, fitting, model = build_and_fit_model(features.as_matrix(), labels,
-                                            hn=N_HN,
-                                            layers=N_LAYERS, epochs=N_EPOCHS,
-                                            verbose=2, dp=DP,
-                                            optimizer=OPTIMIZER)
+    # Results from final model
+    print("all", log_loss(labels, model.predict_proba(features.as_matrix(),
+                                                      verbose=0)))
+    print("train", log_loss(labels_train, model.predict_proba(features_train
+                                                              .as_matrix(),
+                                                              verbose=0)))
+    print("test", log_loss(labels_test, model.predict_proba(features_test
+                                                            .as_matrix(),
+                                                            verbose=0)))
 
-# Results from final model
-print("all", log_loss(labels, model.predict_proba(features.as_matrix(),
-                                                  verbose=0)))
-print("train", log_loss(labels_train, model.predict_proba(features_train
-                                                          .as_matrix(),
-                                                          verbose=0)))
-print("test", log_loss(labels_test, model.predict_proba(features_test
-                                                        .as_matrix(),
-                                                        verbose=0)))
+    # Load in the test data
+    print("PROCESSING TEST DATA...")
+    testDF[["X", "Y"]] = xy_scaler.transform(testDF[["X", "Y"]])
 
+    # set outliers to 0
+    testDF["X"] = testDF["X"].apply(lambda x: 0 if abs(x) > 5 else x)
+    testDF["Y"] = testDF["Y"].apply(lambda y: 0 if abs(y) > 5 else y)
 
-# Load in the test data
-print("PROCESSING TEST DATA...")
-testDF = pd.read_csv("../data/test.csv")
-testDF[["X", "Y"]] = xy_scaler.transform(testDF[["X", "Y"]])
+    # Process the test data, in particular the address
+    new_addresses = sorted(testDF["Address"].unique())
+    new_A_counts = testDF.groupby("Address").size()
+    only_new = set(new_addresses+addresses)-set(addresses)
+    # only_old = set(new_addresses+addresses)-set(new_addresses)
+    in_both = set(new_addresses).intersection(addresses)
+    for addr in only_new:
+        PA = new_A_counts[addr]/float(len(testDF)+len(trainDF))
+        logoddsPA[addr] = np.log(PA)-np.log(1.-PA)
+        logodds[addr] = deepcopy(default_logodds)
+        logodds[addr].index = range(len(categories))
+    for addr in in_both:
+        PA = ((A_counts[addr]+new_A_counts[addr]) /
+              float(len(testDF)+len(trainDF)))
+        logoddsPA[addr] = np.log(PA)-np.log(1.-PA)
 
-# set outliers to 0
-testDF["X"] = testDF["X"].apply(lambda x: 0 if abs(x) > 5 else x)
-testDF["Y"] = testDF["Y"].apply(lambda y: 0 if abs(y) > 5 else y)
+    # Parse data, takes a while
+    features_sub, _ = parse_data(testDF, logodds, logoddsPA)
+    # scaler.fit(features_test)
 
-# Process the test data, in particular the address
-new_addresses = sorted(testDF["Address"].unique())
-new_A_counts = testDF.groupby("Address").size()
-only_new = set(new_addresses+addresses)-set(addresses)
-only_old = set(new_addresses+addresses)-set(new_addresses)
-in_both = set(new_addresses).intersection(addresses)
-for addr in only_new:
-    PA = new_A_counts[addr]/float(len(testDF)+len(trainDF))
-    logoddsPA[addr] = np.log(PA)-np.log(1.-PA)
-    logodds[addr] = deepcopy(default_logodds)
-    logodds[addr].index = range(len(categories))
-for addr in in_both:
-    PA = (A_counts[addr]+new_A_counts[addr])/float(len(testDF)+len(trainDF))
-    logoddsPA[addr] = np.log(PA)-np.log(1.-PA)
+    # Get the final features and classify the test data using NN
+    print("CLASSIFYING TEST DATA USING NN...")
+    collist = features_sub.columns.tolist()
+    features_sub[collist] = scaler.transform(features_sub[collist])
+    predDF = pd.DataFrame(model.predict_proba(features_sub.as_matrix(),
+                                              verbose=0),
+                          columns=sorted(labels.unique()))
+    print("SAVING FINAL RESULTS...")
+    name = ('sf-crime-{}-layer-{}-node-{}-epoch-{}.csv'
+            .format(N_LAYERS, N_HN, N_EPOCHS, OPTIMIZER))
+    predDF.to_csv("../results/{}".format(name),
+                  index_label="Id", na_rep="0")
 
-# Parse data, takes a while
-features_sub, _ = parse_data(testDF, logodds, logoddsPA)
-# scaler.fit(features_test)
-
-# Get the final features and classify the test data using NN
-print("CLASSIFYING TEST DATA USING NN...")
-collist = features_sub.columns.tolist()
-features_sub[collist] = scaler.transform(features_sub[collist])
-predDF = pd.DataFrame(model.predict_proba(features_sub.as_matrix(), verbose=0),
-                      columns=sorted(labels.unique()))
-print("SAVING FINAL RESULTS...")
-name = ('sf-crime-{}-layer-{}-node-{}-epoch-{}.csv'
-        .format(N_LAYERS, N_HN, N_EPOCHS, OPTIMIZER))
-predDF.to_csv("../results/{}".format(name),
-              index_label="Id", na_rep="0")
+if __name__ == '__main__':
+    trainDF = pd.read_csv("../data/train.csv")
+    testDF = pd.read_csv("../data/test.csv")
+    train_and_run(trainDF.copy(deep=True),
+                  testDF.copy(deep=True), N_EPOCHS)
