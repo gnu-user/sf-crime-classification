@@ -369,9 +369,9 @@ def train_and_run(trainDF, testDF, epochs):
     print("CLASSIFYING TEST DATA USING NN...")
     collist = features_sub.columns.tolist()
     features_sub[collist] = scaler.transform(features_sub[collist])
-    predDF = pd.DataFrame(model.predict_proba(features_sub.as_matrix(),
-                                              verbose=0),
-                          columns=sorted(labels.unique()))
+    return pd.DataFrame(model.predict_proba(features_sub.as_matrix(),
+                                            verbose=0),
+                        columns=sorted(labels.unique()))
     print("SAVING FINAL RESULTS...")
     name = ('sf-crime-{}-layer-{}-node-{}-epoch-{}.csv'
             .format(N_LAYERS, N_HN, N_EPOCHS, OPTIMIZER))
