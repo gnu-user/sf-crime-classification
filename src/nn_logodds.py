@@ -372,14 +372,13 @@ def train_and_run(trainDF, testDF, epochs):
     return pd.DataFrame(model.predict_proba(features_sub.as_matrix(),
                                             verbose=0),
                         columns=sorted(labels.unique()))
+if __name__ == '__main__':
+    trainDF = pd.read_csv("../data/train.csv")
+    testDF = pd.read_csv("../data/test.csv")
+    predDF = train_and_run(trainDF.copy(deep=True),
+                           testDF.copy(deep=True), N_EPOCHS)
     print("SAVING FINAL RESULTS...")
     name = ('sf-crime-{}-layer-{}-node-{}-epoch-{}.csv'
             .format(N_LAYERS, N_HN, N_EPOCHS, OPTIMIZER))
     predDF.to_csv("../results/{}".format(name),
                   index_label="Id", na_rep="0")
-
-if __name__ == '__main__':
-    trainDF = pd.read_csv("../data/train.csv")
-    testDF = pd.read_csv("../data/test.csv")
-    train_and_run(trainDF.copy(deep=True),
-                  testDF.copy(deep=True), N_EPOCHS)
