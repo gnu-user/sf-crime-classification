@@ -372,6 +372,11 @@ def train_and_run(trainDF, testDF, epochs):
     return pd.DataFrame(model.predict_proba(features_sub.as_matrix(),
                                             verbose=0),
                         columns=sorted(labels.unique()))
+
+
+def date_hash(date):
+    return 12 * int(date.split('-')[0]) + int(date.split('-')[1])
+
 if __name__ == '__main__':
     trainDF = pd.read_csv("../data/train.csv")
     testDF = pd.read_csv("../data/test.csv")
