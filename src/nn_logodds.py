@@ -287,15 +287,15 @@ def train_and_run(trainDF, testDF, epochs):
     scaler.fit(features)
     features[collist] = scaler.transform(features)
 
-    sss = StratifiedShuffleSplit(labels, train_size=0.5)
-    for train_index, test_index in sss:
-        features_train, features_test = (features.iloc[train_index],
-                                         features.iloc[test_index])
-        labels_train, labels_test = labels[train_index], labels[test_index]
-    features_test.index = range(len(features_test))
-    features_train.index = range(len(features_train))
-    labels_train.index = range(len(labels_train))
-    labels_test.index = range(len(labels_test))
+    # sss = StratifiedShuffleSplit(labels, train_size=0.5)
+    # for train_index, test_index in sss:
+    #     features_train, features_test = (features.iloc[train_index],
+    #                                      features.iloc[test_index])
+    #     labels_train, labels_test = labels[train_index], labels[test_index]
+    # features_test.index = range(len(features_test))
+    # features_train.index = range(len(features_train))
+    # labels_train.index = range(len(labels_train))
+    # labels_test.index = range(len(labels_test))
     features.index = range(len(features))
     labels.index = range(len(labels))
 
@@ -328,14 +328,14 @@ def train_and_run(trainDF, testDF, epochs):
                                                 optimizer=OPTIMIZER)
 
     # Results from final model
-    print("all", log_loss(labels, model.predict_proba(features.as_matrix(),
-                                                      verbose=0)))
-    print("train", log_loss(labels_train, model.predict_proba(features_train
-                                                              .as_matrix(),
-                                                              verbose=0)))
-    print("test", log_loss(labels_test, model.predict_proba(features_test
-                                                            .as_matrix(),
-                                                            verbose=0)))
+    # print("all", log_loss(labels, model.predict_proba(features.as_matrix(),
+    #                                                   verbose=0)))
+    # print("train", log_loss(labels_train, model.predict_proba(features_train
+    #                                                           .as_matrix(),
+    #                                                           verbose=0)))
+    # print("test", log_loss(labels_test, model.predict_proba(features_test
+    #                                                         .as_matrix(),
+    #                                                         verbose=0)))
 
     # Load in the test data
     print("PROCESSING TEST DATA...")
