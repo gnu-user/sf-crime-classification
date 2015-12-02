@@ -377,6 +377,10 @@ def train_and_run(trainDF, testDF, epochs):
 def date_hash(date):
     return 12 * int(date.split('-')[0]) + int(date.split('-')[1])
 
+
+def date_unhash(num):
+    return (int(num / 12), num % 12)
+
 if __name__ == '__main__':
     trainDF = pd.read_csv("../data/train.csv")
     testDF = pd.read_csv("../data/test.csv")
@@ -392,6 +396,7 @@ if __name__ == '__main__':
                         .union(set(test_dates.unique()))))
 
     for date in dates:
+        print('Processing date {}-{}'.format(*date_unhash(date)))
         test_cols = ((test_dates >= (date-months_before)) &
                      (test_dates <= (date+months_after)))
         train_cols = ((train_dates >= (date-months_before)) &
