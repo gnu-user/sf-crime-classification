@@ -382,6 +382,27 @@ if __name__ == '__main__':
     testDF = pd.read_csv("../data/test.csv")
     predDF = train_and_run(trainDF.copy(deep=True),
                            testDF.copy(deep=True), N_EPOCHS)
+
+    months_before = 1
+    months_after = 1
+
+    train_dates = trainDF['Dates'].map(date_hash)
+    test_dates = testDF['Dates'].map(date_hash)
+    dates = sorted(list(set(train_dates.unique())
+                        .union(set(test_dates.unique()))))
+
+    for date in dates:
+        test_cols = ((test_dates >= (date-months_before)) &
+                     (test_dates <= (date+months_after)))
+        train_cols = ((train_dates >= (date-months_before)) &
+                      (train_dates <= (date+months_after)))
+        pred = train_and_run(trainDF[train_cols].copy(deep=True),
+                             testDF[test_cols].copy(deep=True),
+                             N_EPOCHS)
+        predDF[test_cols].add(pred)
+
+    # normalize rows
+    predDF.div(predDF.sum(axis=1), axis=0)
     print("SAVING FINAL RESULTS...")
     name = ('sf-crime-{}-layer-{}-node-{}-epoch-{}.csv'
             .format(N_LAYERS, N_HN, N_EPOCHS, OPTIMIZER))
